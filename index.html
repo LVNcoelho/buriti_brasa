@@ -458,626 +458,563 @@
                     <div class="flex flex-col sm:flex-row items-center gap-3">
                         <div class="relative w-full sm:w-64">
                             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-zinc-500"></i>
-                            <input type="text" id="search-input" oninput="renderOrdersTable()" placeholder="Buscar cliente ou CNPJ..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none">
+                            <input type="text" id="search-input" onkeyup="filterOrders()" placeholder="Buscar cliente ou CNPJ..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500">
                         </div>
-
-                        <select id="status-filter" onchange="renderOrdersTable()" class="w-full sm:w-auto bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
-                            <option value="TODOS">Todos os Status</option>
+                        <select id="status-filter" onchange="filterOrders()" class="w-full sm:w-auto bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                            <option value="ALL">Todos os Status</option>
                             <option value="Pendente">Pendente</option>
-                            <option value="Em Produção">Em Produção</option>
-                            <option value="A Caminho">A Caminho</option>
                             <option value="Entregue">Entregue</option>
+                            <option value="Cancelado">Cancelado</option>
                         </select>
                     </div>
                 </div>
 
+                <!-- TABELA DE PEDIDOS -->
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs">
-                        <thead class="bg-zinc-900/80 text-zinc-400 uppercase font-semibold border-b border-zinc-800 font-brand">
+                    <table class="w-full text-left text-xs text-zinc-300">
+                        <thead class="bg-zinc-900/90 text-zinc-400 uppercase tracking-wider text-[10px]">
                             <tr>
-                                <th class="px-4 py-3">Ficha Nº</th>
-                                <th class="px-4 py-3">Cliente / CNPJ</th>
-                                <th class="px-4 py-3">Volume (Dúzias)</th>
-                                <th class="px-4 py-3">Valor Total</th>
-                                <th class="px-4 py-3">Entrega</th>
-                                <th class="px-4 py-3">Status</th>
-                                <th class="px-4 py-3 text-right">Ações</th>
+                                <th class="p-3">Ficha / Código</th>
+                                <th class="p-3">Estabelecimento / Cliente</th>
+                                <th class="p-3">Qtd. Dúzias</th>
+                                <th class="p-3">Total R$</th>
+                                <th class="p-3">Data / Previsão</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="orders-table-body" class="divide-y divide-zinc-800 text-zinc-300"></tbody>
+                        <tbody id="orders-table-body" class="divide-y divide-zinc-800">
+                            <!-- Inserido dinamicamente via JS -->
+                        </tbody>
                     </table>
-                </div>
-
-                <div id="no-orders-msg" class="hidden text-center py-8 text-zinc-500 text-xs">
-                    <i class="fa-solid fa-box-open text-3xl mb-2 text-zinc-600 block"></i>
-                    Nenhuma encomenda encontrada.
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- MODAL SUPABASE -->
-    <div id="supabase-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-zinc-900 border border-amber-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-                <h3 class="font-bold text-white text-base flex items-center gap-2 font-brand">
-                    <i class="fa-solid fa-database text-amber-500"></i>
-                    Conexão com Banco Supabase
+    <!-- MODAL DE DETALHES E COMPROVANTE PARA IMPRESSÃO -->
+    <div id="receipt-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative p-6">
+            
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-3 no-print">
+                <h3 class="font-bold text-white text-sm uppercase font-brand flex items-center gap-2">
+                    <i class="fa-solid fa-receipt text-amber-500"></i> Comprovante Oficial da Encomenda
                 </h3>
-                <button onclick="closeSupabaseModal()" class="text-zinc-400 hover:text-white">
-                    <i class="fa-solid fa-xmark"></i>
+                <button onclick="closeReceiptModal()" class="text-zinc-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
-            <p class="text-xs text-zinc-300 leading-relaxed">
-                Insira suas credenciais do projeto Supabase. Os pedidos salvos serão sincronizados na nuvem!
+            <!-- ÁREA IMPRESSA DO COMPROVANTE -->
+            <div id="printable-receipt" class="my-4 bg-white text-zinc-900 p-6 rounded-xl space-y-4 border border-zinc-300">
+                <div class="flex items-center justify-between border-b print-border pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-black rounded-lg p-1 border border-amber-500 flex flex-col items-center justify-between text-center shrink-0">
+                            <span class="text-[5px] font-black text-amber-200 font-brand">ACENDEDOR</span>
+                            <div class="text-center leading-none">
+                                <span class="text-[8px] font-black text-amber-300 font-brand block">BURITI</span>
+                                <span class="text-[7px] font-black text-orange-400 font-brand block">BRASA</span>
+                            </div>
+                            <span class="text-[4px] font-bold text-amber-200">4 UNID.</span>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-black font-brand uppercase tracking-wider print-dark-text">BURITI BRASA</h2>
+                            <p class="text-[10px] text-zinc-600 font-semibold uppercase">Acendedor de Carvão Artesanal e Sustentável</p>
+                            <p class="text-[9px] text-zinc-500">São João da Ponta - Pará • (91) 98000-0000</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[9px] uppercase font-bold text-zinc-500 block">Comprovante Pedido</span>
+                        <span id="rec-order-number" class="text-sm font-black text-amber-600 font-mono">#BB-2026-001</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-xs print-dark-text border-b print-border pb-3">
+                    <div>
+                        <span class="text-[10px] font-bold text-zinc-500 uppercase block">Cliente / Razão Social:</span>
+                        <strong id="rec-client-name" class="text-sm">Supermercado Exemplo</strong>
+                        <p id="rec-client-doc" class="text-[11px] text-zinc-600">CNPJ: 00.000.000/0001-00</p>
+                        <p id="rec-client-phone" class="text-[11px] text-zinc-600">Tel: (91) 98000-0000</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-zinc-500 uppercase block">Endereço de Entrega:</span>
+                        <p id="rec-client-address" class="text-[11px] leading-tight">Rua Principal, 123</p>
+                        <p id="rec-client-city" class="text-[11px] font-semibold">São João da Ponta - PA</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <span class="text-[10px] font-bold text-zinc-500 uppercase block">Resumo do Pedido:</span>
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b print-border bg-zinc-100 font-bold">
+                                <th class="p-1.5">Item / Descrição</th>
+                                <th class="p-1.5 text-center">Qtd. Dúzias</th>
+                                <th class="p-1.5 text-center">Cartelas Total</th>
+                                <th class="p-1.5 text-right">Valor Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b print-border">
+                                <td class="p-1.5 font-medium">Acendedor Buriti Brasa (Caixa c/ 4 Unid.)</td>
+                                <td id="rec-dozens" class="p-1.5 text-center font-bold">1 dz</td>
+                                <td id="rec-cartelas" class="p-1.5 text-center">12 cartelas</td>
+                                <td id="rec-total" class="p-1.5 text-right font-bold text-emerald-700">R$ 60,00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-xs border-t print-border pt-3">
+                    <div>
+                        <p class="text-[10px] text-zinc-500">Forma de Pagamento: <strong id="rec-payment" class="text-zinc-800">PIX</strong></p>
+                        <p class="text-[10px] text-zinc-500">Data Emissão: <span id="rec-date">08/09/2026</span></p>
+                        <p class="text-[10px] text-zinc-500">Previsão Entrega: <strong id="rec-delivery" class="text-zinc-800">12/09/2026</strong></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] font-bold text-zinc-500 uppercase block">Total a Pagar:</span>
+                        <span id="rec-total-final" class="text-xl font-black text-emerald-600 font-mono">R$ 60,00</span>
+                    </div>
+                </div>
+
+                <div id="rec-notes-box" class="text-[10px] text-zinc-600 bg-zinc-50 p-2 rounded border border-zinc-200">
+                    <strong>Obs:</strong> <span id="rec-notes">Nenhuma observação.</span>
+                </div>
+
+                <div class="pt-6 mt-4 border-t print-border flex justify-between items-end text-[9px] text-zinc-500">
+                    <div>
+                        <p class="border-t border-zinc-400 w-40 pt-1 text-center font-semibold">Assinatura do Responsável</p>
+                    </div>
+                    <div class="text-right">
+                        <p>Buriti Brasa • São João da Ponta</p>
+                        <p>Agradecemos a sua preferência!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-3 border-t border-zinc-800 no-print">
+                <button onclick="closeReceiptModal()" class="px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-semibold hover:bg-zinc-700">
+                    Fechar
+                </button>
+                <button onclick="window.print()" class="brand-btn-gradient text-white text-xs font-bold px-5 py-2 rounded-xl flex items-center gap-2">
+                    <i class="fa-solid fa-print"></i> Imprimir Comprovante
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIGURAÇÃO DO SUPABASE -->
+    <div id="supabase-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4">
+                <h3 class="font-bold text-white text-sm uppercase font-brand flex items-center gap-2">
+                    <i class="fa-solid fa-database text-amber-500"></i> Configurar Banco Supabase
+                </h3>
+                <button onclick="closeSupabaseModal()" class="text-zinc-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-zinc-400 mb-4 leading-relaxed">
+                Insira abaixo as credenciais do seu projeto Supabase para sincronizar suas encomendas na nuvem. Se deixado em branco, o sistema usará o armazenamento local do seu navegador (LocalStorage).
             </p>
 
             <div class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Supabase Project URL</label>
-                    <input type="text" id="supabase-url" placeholder="https://xyzcompany.supabase.co" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-mono">
+                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Project URL do Supabase</label>
+                    <input type="text" id="supabase-url" placeholder="https://xyz.supabase.co" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Supabase Anon Key (Public Key)</label>
-                    <input type="text" id="supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-mono">
+                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Anon Key (Public API Key)</label>
+                    <input type="password" id="supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5..." class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
             </div>
 
-            <div class="flex items-center justify-end gap-2 pt-2">
-                <button onclick="clearSupabaseConfig()" class="px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-zinc-800">
-                    Desconectar
+            <div class="mt-6 flex justify-end gap-2">
+                <button onclick="closeSupabaseModal()" class="px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-semibold hover:bg-zinc-700">
+                    Cancelar
                 </button>
                 <button onclick="saveSupabaseConfig()" class="brand-btn-gradient text-white text-xs font-bold px-5 py-2 rounded-xl">
-                    Salvar e Conectar
+                    Salvar Conexão
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL IMPRESSÃO COMPROVANTE -->
-    <div id="receipt-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-zinc-900 border border-amber-500/40 rounded-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col">
-            <div class="no-print p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950">
-                <span class="text-xs font-bold text-amber-400 flex items-center gap-2 font-brand">
-                    <i class="fa-solid fa-print"></i> Visualização para Impressão
-                </span>
-                <div class="flex items-center gap-2">
-                    <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 font-brand">
-                        <i class="fa-solid fa-print"></i> Imprimir / PDF
-                    </button>
-                    <button onclick="closeModal()" class="text-zinc-400 hover:text-white px-2 py-1">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div id="printable-receipt" class="p-8 bg-white text-zinc-900">
-                <div class="border-b-2 border-amber-600 pb-4 mb-5 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-16 h-16 bg-black rounded-xl p-1 border-2 border-amber-600 flex flex-col items-center justify-between text-center shrink-0">
-                            <span class="text-[6px] font-black text-amber-300 font-brand uppercase tracking-tighter">ACENDEDOR DE CARVÃO</span>
-                            <div class="flex items-center justify-center gap-0.5 my-auto">
-                                <svg class="w-3 h-3 fill-amber-400" viewBox="0 0 24 24"><path d="M12 2C11.5 4 10 6 7 6C6 6 5 5 5 4C3 6 3 8 5 9C7 10 9 9 10 8C9.5 11 8 13 5 14C8 14 10 12 11 10C11 13 10.5 16 9 19C10.5 18 11.5 15 12 12C12.5 15 13.5 18 15 19C13.5 16 13 13 13 10C14 12 16 14 19 14C16 13 14.5 11 14 8C15 9 17 10 19 9C21 8 21 6 19 4C19 5 18 6 17 6C14 6 12.5 4 12 2Z"/></svg>
-                                <div class="text-center leading-none">
-                                    <span class="text-[10px] font-black text-amber-400 font-brand block">BURITI</span>
-                                    <span class="text-[9px] font-black text-orange-400 font-brand block">BRASA</span>
-                                </div>
-                                <svg class="w-3 h-3 fill-amber-400 transform -scale-x-100" viewBox="0 0 24 24"><path d="M12 2C11.5 4 10 6 7 6C6 6 5 5 5 4C3 6 3 8 5 9C7 10 9 9 10 8C9.5 11 8 13 5 14C8 14 10 12 11 10C11 13 10.5 16 9 19C10.5 18 11.5 15 12 12C12.5 15 13.5 18 15 19C13.5 16 13 13 13 10C14 12 16 14 19 14C16 13 14.5 11 14 8C15 9 17 10 19 9C21 8 21 6 19 4C19 5 18 6 17 6C14 6 12.5 4 12 2Z"/></svg>
-                            </div>
-                            <span class="text-[5px] font-bold text-white uppercase tracking-tighter">CONTÉM 4 UNIDADES</span>
-                        </div>
-                        <div>
-                            <span class="text-[10px] font-bold text-amber-700 font-brand uppercase tracking-widest block">ACENDEDOR DE CARVÃO</span>
-                            <h1 class="text-2xl font-black font-brand text-zinc-900 tracking-wider uppercase print-dark-text leading-none">
-                                BURITI BRASA
-                            </h1>
-                            <p class="text-xs font-bold text-amber-800 uppercase tracking-wide mt-1 font-brand">
-                                ARTESANAL E SUSTENTÁVEL
-                            </p>
-                            <p class="text-[11px] text-zinc-600">
-                                Fabricado em São João da Ponta - Pará • Caixa com 4 unidades
-                            </p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-xs font-bold text-zinc-500 block uppercase font-brand">Ficha de Pedido</span>
-                        <span id="rec-order-id" class="text-base font-black text-amber-700 font-mono">#BB-000</span>
-                        <span id="rec-date" class="text-[11px] text-zinc-500 block">00/00/2026</span>
-                    </div>
-                </div>
-
-                <div class="bg-zinc-50 border border-zinc-300 rounded-lg p-4 mb-5 text-xs space-y-1.5 print-border">
-                    <h3 class="font-bold text-zinc-900 uppercase tracking-wider text-[11px] border-b border-zinc-200 pb-1 mb-2 font-brand">
-                        Dados do Estabelecimento / Cliente
-                    </h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <p><strong class="text-zinc-700">Razão Social:</strong> <span id="rec-client-name">-</span></p>
-                        <p><strong class="text-zinc-700">Nome Fantasia:</strong> <span id="rec-trade-name">-</span></p>
-                        <p><strong class="text-zinc-700">CNPJ / CPF:</strong> <span id="rec-client-doc">-</span></p>
-                        <p><strong class="text-zinc-700">Telefone / Fone:</strong> <span id="rec-client-phone">-</span></p>
-                        <p class="col-span-2"><strong class="text-zinc-700">Endereço de Entrega:</strong> <span id="rec-client-address">-</span></p>
-                        <p class="col-span-2"><strong class="text-zinc-700">Cidade / UF:</strong> <span id="rec-client-city">-</span></p>
-                    </div>
-                </div>
-
-                <table class="w-full text-xs text-left mb-6 border-collapse">
-                    <thead>
-                        <tr class="bg-amber-100 border-y border-amber-600 text-amber-950 font-bold uppercase font-brand">
-                            <th class="py-2 px-3">Descrição do Produto</th>
-                            <th class="py-2 px-3 text-center">Dúzias</th>
-                            <th class="py-2 px-3 text-center">Cartelas</th>
-                            <th class="py-2 px-3 text-right">Preço Dúzia</th>
-                            <th class="py-2 px-3 text-right">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-zinc-300 text-zinc-900">
-                        <tr>
-                            <td class="py-3 px-3">
-                                <strong>Acendedor Buriti Brasa (4 Unidades)</strong><br>
-                                <span class="text-[10px] text-zinc-600">Sem cheiro químico • 10 minutos de chama</span>
-                            </td>
-                            <td id="rec-qty-dozens" class="py-3 px-3 text-center font-bold">0 dz</td>
-                            <td id="rec-qty-cartelas" class="py-3 px-3 text-center">0 un.</td>
-                            <td id="rec-price-dozen" class="py-3 px-3 text-right">R$ 0,00</td>
-                            <td id="rec-subtotal" class="py-3 px-3 text-right font-bold">R$ 0,00</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div class="flex justify-between items-start mb-8 text-xs">
-                    <div class="space-y-1">
-                        <p><strong class="text-zinc-700">Pagamento:</strong> <span id="rec-payment">-</span></p>
-                        <p><strong class="text-zinc-700">Previsão de Entrega:</strong> <span id="rec-delivery-date">-</span></p>
-                        <p><strong class="text-zinc-700">Status:</strong> <span id="rec-status" class="font-bold">-</span></p>
-                        <div class="mt-2 text-[10px] text-zinc-600 italic max-w-xs" id="rec-notes-container">
-                            Obs: <span id="rec-notes">Nenhuma instrução adicional.</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-amber-50 border-2 border-amber-500 rounded-lg p-3 text-right min-w-[180px]">
-                        <span class="text-[10px] font-bold text-amber-900 uppercase block font-brand">VALOR TOTAL DO PEDIDO</span>
-                        <span id="rec-final-total" class="text-2xl font-black text-amber-800 font-mono">R$ 0,00</span>
-                    </div>
-                </div>
-
-                <div class="pt-10 border-t border-zinc-300 grid grid-cols-2 gap-8 text-center text-xs text-zinc-700">
-                    <div>
-                        <div class="border-b border-zinc-400 mb-1"></div>
-                        <p class="font-bold font-brand">Buriti Brasa - Vendas</p>
-                    </div>
-                    <div>
-                        <div class="border-b border-zinc-400 mb-1"></div>
-                        <p class="font-bold font-brand">Assinatura do Cliente / Recebedor</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- LOGICA JAVASCRIPT DO SISTEMA -->
     <script>
-        let orders = [];
+        // ESTADO GLOBAL DA APLICAÇÃO
         let supabaseClient = null;
+        let ordersData = [];
+        let currentActiveOrder = null;
 
-        const defaultOrders = [
-            {
-                id: "BB-2026-001",
-                client_name: "Supermercado Tapajós",
-                client_trade_name: "Tapajós Centro",
-                client_doc: "12.345.678/0001-90",
-                client_phone: "(91) 98112-3344",
-                client_address: "Av. Barão do Rio Branco, 450",
-                client_city: "São João da Ponta/PA",
-                qty_dozens: 5,
-                qty_units: 0,
-                price_per_dozen: 60.00,
-                payment_method: "PIX / Transferência",
-                order_date: "2026-09-01",
-                delivery_date: "2026-09-05",
-                order_notes: "Entregar no setor de cargas.",
-                status: "Entregue"
-            }
-        ];
-
-        window.onload = function() {
+        // INICIALIZAÇÃO
+        document.addEventListener("DOMContentLoaded", () => {
+            initDates();
             initSupabaseFromStorage();
+            loadOrders();
+            generateOrderNumber();
+        });
+
+        function initDates() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('order_date').value = today;
-            document.getElementById('delivery_date').value = today;
+            
+            // Previsão padrão de 3 dias
+            const delivery = new Date();
+            delivery.setDate(delivery.getDate() + 3);
+            document.getElementById('delivery_date').value = delivery.toISOString().split('T')[0];
+        }
 
-            fetchOrders();
-            generateNewOrderId();
-            calculateTotals();
-        };
-
+        // SUPABASE CONFIGURATION
         function initSupabaseFromStorage() {
-            const url = localStorage.getItem('buriti_supabase_url');
-            const key = localStorage.getItem('buriti_supabase_key');
+            const storedUrl = localStorage.getItem('BB_SUPABASE_URL');
+            const storedKey = localStorage.getItem('BB_SUPABASE_KEY');
 
-            if (url && key && window.supabase) {
+            if (storedUrl && storedKey && window.supabase) {
                 try {
-                    supabaseClient = window.supabase.createClient(url, key);
-                    document.getElementById('supabase-indicator').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-                    document.getElementById('supabase-status-text').textContent = "Supabase: Conectado";
-                    document.getElementById('supabase-url').value = url;
-                    document.getElementById('supabase-key').value = key;
-                } catch(e) {
-                    console.error("Erro ao inicializar Supabase:", e);
+                    supabaseClient = window.supabase.createClient(storedUrl, storedKey);
+                    document.getElementById('supabase-indicator').className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+                    document.getElementById('supabase-status-text').innerText = "Supabase: Conectado";
+                    document.getElementById('supabase-url').value = storedUrl;
+                    document.getElementById('supabase-key').value = storedKey;
+                } catch (e) {
+                    console.error("Erro ao conectar no Supabase:", e);
+                    setLocalMode();
                 }
             } else {
-                document.getElementById('supabase-indicator').className = "w-2.5 h-2.5 rounded-full bg-amber-500";
-                document.getElementById('supabase-status-text').textContent = "Supabase: Modo Local";
+                setLocalMode();
             }
         }
 
-        async function fetchOrders() {
-            if (supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('pedidos')
-                        .select('*')
-                        .order('created_at', { ascending: false });
+        function setLocalMode() {
+            supabaseClient = null;
+            document.getElementById('supabase-indicator').className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
+            document.getElementById('supabase-status-text').innerText = "Supabase: Modo Local";
+        }
 
-                    if (!error && data) {
-                        orders = data;
-                        updateDashboard();
-                        renderOrdersTable();
-                        return;
-                    }
-                } catch(err) {
-                    console.warn("Falha ao consultar Supabase, alternando para LocalStorage", err);
-                }
-            }
+        function openSupabaseModal() {
+            document.getElementById('supabase-modal').classList.remove('hidden');
+        }
 
-            const saved = localStorage.getItem('buriti_brasa_orders');
-            if (saved) {
-                try { orders = JSON.parse(saved); } catch(e) { orders = defaultOrders; }
+        function closeSupabaseModal() {
+            document.getElementById('supabase-modal').classList.add('hidden');
+        }
+
+        function saveSupabaseConfig() {
+            const url = document.getElementById('supabase-url').value.trim();
+            const key = document.getElementById('supabase-key').value.trim();
+
+            if (url && key) {
+                localStorage.setItem('BB_SUPABASE_URL', url);
+                localStorage.setItem('BB_SUPABASE_KEY', key);
+                initSupabaseFromStorage();
             } else {
-                orders = defaultOrders;
-                localStorage.setItem('buriti_brasa_orders', JSON.stringify(orders));
+                localStorage.removeItem('BB_SUPABASE_URL');
+                localStorage.removeItem('BB_SUPABASE_KEY');
+                setLocalMode();
             }
-            updateDashboard();
-            renderOrdersTable();
+            closeSupabaseModal();
+            loadOrders();
         }
 
-        async function saveOrderData(orderObj) {
-            if (supabaseClient) {
-                try {
-                    const { error } = await supabaseClient.from('pedidos').insert([orderObj]);
-                    if (error) {
-                        console.error("Erro Supabase:", error);
-                        alert("Salvo localmente. Não foi possível conectar ao Supabase: " + error.message);
-                    }
-                } catch(err) { console.error(err); }
-            }
+        // NAVEGAÇÃO DE TABS
+        function switchTab(tabId) {
+            ['dashboard', 'novo-pedido', 'pedidos'].forEach(tab => {
+                document.getElementById(`tab-${tab}`).classList.add('hidden');
+                const btn = document.getElementById(`nav-${tab}`);
+                if (btn) {
+                    btn.classList.remove('bg-amber-500', 'text-zinc-950', 'font-bold');
+                    btn.classList.add('text-zinc-300');
+                }
+            });
 
-            orders.unshift(orderObj);
-            localStorage.setItem('buriti_brasa_orders', JSON.stringify(orders));
-            updateDashboard();
-            renderOrdersTable();
-        }
-
-        function switchTab(tabName) {
-            document.getElementById('tab-dashboard').classList.add('hidden');
-            document.getElementById('tab-novo-pedido').classList.add('hidden');
-            document.getElementById('tab-pedidos').classList.add('hidden');
-
-            document.getElementById('nav-dashboard').className = "px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all text-zinc-300 hover:text-white hover:bg-zinc-800";
-            document.getElementById('nav-novo-pedido').className = "px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all text-zinc-300 hover:text-white hover:bg-zinc-800";
-            document.getElementById('nav-pedidos').className = "px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all text-zinc-300 hover:text-white hover:bg-zinc-800 relative";
-
-            if (tabName === 'dashboard') {
-                document.getElementById('tab-dashboard').classList.remove('hidden');
-                document.getElementById('nav-dashboard').className = "px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all bg-amber-500 text-zinc-950 font-bold shadow-md";
-                updateDashboard();
-            } else if (tabName === 'novo-pedido') {
-                document.getElementById('tab-novo-pedido').classList.remove('hidden');
-                document.getElementById('nav-novo-pedido').className = "px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all bg-amber-500 text-zinc-950 font-bold shadow-md";
-            } else if (tabName === 'pedidos') {
-                document.getElementById('tab-pedidos').classList.remove('hidden');
-                document.getElementById('nav-pedidos').className = "px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all bg-amber-500 text-zinc-950 font-bold shadow-md";
-                renderOrdersTable();
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-amber-500', 'text-zinc-950', 'font-bold');
+                activeBtn.classList.remove('text-zinc-300');
             }
         }
 
-        function generateNewOrderId() {
-            const strNum = String(orders.length + 1).padStart(3, '0');
-            const newId = `#BB-2026-${strNum}`;
-            document.getElementById('form-order-number').textContent = newId;
-            return newId;
-        }
-
+        // CÁLCULOS FINANCEIROS E VOLUMES
         function calculateTotals() {
             const dozens = parseFloat(document.getElementById('qty_dozens').value) || 0;
-            const avulsas = parseInt(document.getElementById('qty_units').value) || 0;
+            const units = parseInt(document.getElementById('qty_units').value) || 0;
             const pricePerDozen = parseFloat(document.getElementById('price_per_dozen').value) || 0;
 
-            const totalCartelas = (dozens * 12) + avulsas;
-            const totalAcendedores = totalCartelas * 4;
-            const totalValue = (dozens * pricePerDozen) + (avulsas * (pricePerDozen / 12));
+            const totalCartelas = Math.round((dozens * 12) + units);
+            const totalAcendedores = totalCartelas * 4; // Cada cartela contém 4 unidades
 
-            document.getElementById('calc-total-cartelas').textContent = totalCartelas;
-            document.getElementById('calc-total-acendedores').textContent = totalAcendedores;
-            document.getElementById('calc-subtotal-val').textContent = totalValue.toFixed(2).replace('.', ',');
-            document.getElementById('calc-final-total').textContent = totalValue.toFixed(2).replace('.', ',');
+            const pricePerCartela = pricePerDozen / 12;
+            const subtotal = (dozens * pricePerDozen) + (units * pricePerCartela);
+
+            document.getElementById('calc-total-cartelas').innerText = totalCartelas;
+            document.getElementById('calc-total-acendedores').innerText = totalAcendedores;
+            document.getElementById('calc-subtotal-val').innerText = subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('calc-final-total').innerText = subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            return { dozens, units, totalCartelas, totalAcendedores, subtotal };
         }
 
-        async function handleSaveOrder(e) {
-            e.preventDefault();
+        function generateOrderNumber() {
+            const random = Math.floor(1000 + Math.random() * 9000);
+            const orderNum = `#BB-2026-${random}`;
+            document.getElementById('form-order-number').innerText = orderNum;
+            return orderNum;
+        }
 
-            const dozens = parseFloat(document.getElementById('qty_dozens').value) || 0;
-            const avulsas = parseInt(document.getElementById('qty_units').value) || 0;
-            const pricePerDozen = parseFloat(document.getElementById('price_per_dozen').value) || 0;
+        // SALVAR ENCOMENDA
+        async function handleSaveOrder(event) {
+            event.preventDefault();
 
-            const newOrder = {
-                id: document.getElementById('form-order-number').textContent,
+            const calc = calculateTotals();
+            const orderData = {
+                id: Date.now().toString(),
+                order_number: document.getElementById('form-order-number').innerText,
                 client_name: document.getElementById('client_name').value,
                 client_trade_name: document.getElementById('client_trade_name').value,
                 client_doc: document.getElementById('client_doc').value,
                 client_phone: document.getElementById('client_phone').value,
                 client_address: document.getElementById('client_address').value,
                 client_city: document.getElementById('client_city').value,
-                qty_dozens: dozens,
-                qty_units: avulsas,
-                price_per_dozen: pricePerDozen,
+                qty_dozens: calc.dozens,
+                qty_units: calc.units,
+                total_cartelas: calc.totalCartelas,
+                price_per_dozen: parseFloat(document.getElementById('price_per_dozen').value) || 0,
+                total_amount: calc.subtotal,
                 payment_method: document.getElementById('payment_method').value,
                 order_date: document.getElementById('order_date').value,
                 delivery_date: document.getElementById('delivery_date').value,
-                order_notes: document.getElementById('order_notes').value,
-                status: "Pendente"
+                notes: document.getElementById('order_notes').value,
+                status: 'Pendente',
+                created_at: new Date().toISOString()
             };
 
-            await saveOrderData(newOrder);
-            openReceiptModal(newOrder.id);
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.from('buriti_orders').insert([orderData]);
+                    if (error) throw error;
+                } catch (err) {
+                    console.error("Erro Supabase, salvando localmente:", err);
+                    saveOrderLocally(orderData);
+                }
+            } else {
+                saveOrderLocally(orderData);
+            }
+
+            alert("Encomenda gravada com sucesso!");
             resetForm();
+            loadOrders();
             switchTab('pedidos');
+        }
+
+        function saveOrderLocally(order) {
+            let local = JSON.parse(localStorage.getItem('BB_ORDERS') || '[]');
+            local.unshift(order);
+            localStorage.setItem('BB_ORDERS', JSON.stringify(local));
         }
 
         function resetForm() {
             document.getElementById('order-form').reset();
-            document.getElementById('qty_dozens').value = 1;
-            document.getElementById('qty_units').value = 0;
-            document.getElementById('price_per_dozen').value = "60.00";
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('order_date').value = today;
-            document.getElementById('delivery_date').value = today;
-            generateNewOrderId();
+            initDates();
+            generateOrderNumber();
             calculateTotals();
         }
 
-        function updateDashboard() {
-            document.getElementById('stat-total-pedidos').textContent = orders.length;
-            document.getElementById('badge-total-pedidos').textContent = orders.length;
+        // CARREGAR E EXIBIR PEDIDOS
+        async function loadOrders() {
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.from('buriti_orders').select('*').order('created_at', { ascending: false });
+                    if (error) throw error;
+                    ordersData = data || [];
+                } catch (e) {
+                    console.error("Falha ao buscar Supabase:", e);
+                    ordersData = JSON.parse(localStorage.getItem('BB_ORDERS') || '[]');
+                }
+            } else {
+                ordersData = JSON.parse(localStorage.getItem('BB_ORDERS') || '[]');
+            }
 
-            let totalDozens = 0, totalRevenue = 0, pendingCount = 0;
+            renderDashboard();
+            renderOrdersTable();
+        }
 
-            orders.forEach(o => {
-                const dz = parseFloat(o.qty_dozens) || 0;
-                const un = parseFloat(o.qty_units) || 0;
-                const pr = parseFloat(o.price_per_dozen) || 0;
+        function renderDashboard() {
+            const totalOrders = ordersData.length;
+            const totalDozens = ordersData.reduce((acc, item) => acc + (parseFloat(item.qty_dozens) || 0), 0);
+            const totalRevenue = ordersData.reduce((acc, item) => acc + (parseFloat(item.total_amount) || 0), 0);
+            const totalPending = ordersData.filter(i => i.status === 'Pendente').length;
 
-                totalDozens += dz + (un / 12);
-                totalRevenue += (dz * pr) + (un * (pr / 12));
-                if (o.status === 'Pendente' || o.status === 'Em Produção') pendingCount++;
-            });
+            document.getElementById('stat-total-pedidos').innerText = totalOrders;
+            document.getElementById('stat-total-duzias').innerText = `${totalDozens.toFixed(1)} dz`;
+            document.getElementById('stat-total-faturamento').innerText = `R$ ${totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            document.getElementById('stat-pedidos-pendentes').innerText = totalPending;
+            document.getElementById('badge-total-pedidos').innerText = totalOrders;
 
-            document.getElementById('stat-total-duzias').textContent = totalDozens.toFixed(1) + " dz";
-            document.getElementById('stat-total-faturamento').textContent = "R$ " + totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            document.getElementById('stat-pedidos-pendentes').textContent = pendingCount;
-
+            // Renderizar Lista Recente
             const recentContainer = document.getElementById('recent-orders-list');
-            if (orders.length === 0) {
-                recentContainer.innerHTML = '<p class="text-xs text-zinc-500 py-4 text-center">Nenhuma encomenda cadastrada até o momento.</p>';
+            recentContainer.innerHTML = '';
+
+            const recentList = ordersData.slice(0, 3);
+            if (recentList.length === 0) {
+                recentContainer.innerHTML = `<p class="text-xs text-zinc-500 py-2">Nenhuma encomenda registrada ainda.</p>`;
                 return;
             }
 
-            recentContainer.innerHTML = orders.slice(0, 4).map(o => {
-                const dz = parseFloat(o.qty_dozens) || 0;
-                const un = parseFloat(o.qty_units) || 0;
-                const pr = parseFloat(o.price_per_dozen) || 0;
-                const totalVal = (dz * pr) + (un * (pr / 12));
-
-                return `
-                    <div class="bg-zinc-900/90 border border-zinc-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 hover:border-amber-500/40 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-xs">
-                                <i class="fa-solid fa-store"></i>
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-bold text-white">${escapeHtml(o.client_name)}</h4>
-                                <span class="text-[10px] text-zinc-400 font-mono">${o.id} • ${dz} dz (${(dz*12)+un} cartelas)</span>
-                            </div>
+            recentList.forEach(order => {
+                const item = document.createElement('div');
+                item.className = "bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-3";
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-mono text-xs font-bold">
+                            #
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-bold text-emerald-400 font-mono">R$ ${totalVal.toFixed(2).replace('.', ',')}</span>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadgeClass(o.status)}">${o.status}</span>
-                            <button onclick="openReceiptModal('${o.id}')" class="text-zinc-400 hover:text-amber-400 text-xs px-2 py-1">
-                                <i class="fa-solid fa-print"></i>
-                            </button>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">${order.client_name}</h4>
+                            <p class="text-[10px] text-zinc-400">${order.order_number} • ${order.qty_dozens} dz (${order.total_cartelas || order.qty_dozens * 12} cartelas)</p>
                         </div>
                     </div>
+                    <div class="text-right">
+                        <span class="text-xs font-bold text-emerald-400 font-mono">R$ ${parseFloat(order.total_amount).toFixed(2)}</span>
+                        <span class="block text-[9px] text-amber-400 uppercase font-semibold">${order.status}</span>
+                    </div>
                 `;
-            }).join('');
+                recentContainer.appendChild(item);
+            });
         }
 
         function renderOrdersTable() {
             const tbody = document.getElementById('orders-table-body');
-            const search = document.getElementById('search-input').value.toLowerCase();
-            const statusFilter = document.getElementById('status-filter').value;
-            const noMsg = document.getElementById('no-orders-msg');
+            tbody.innerHTML = '';
 
-            let filtered = orders.filter(o => {
-                const matchSearch = (o.client_name || '').toLowerCase().includes(search) || 
-                                    (o.client_doc || '').toLowerCase().includes(search) ||
-                                    (o.id || '').toLowerCase().includes(search);
-                const matchStatus = statusFilter === 'TODOS' || o.status === statusFilter;
-                return matchSearch && matchStatus;
-            });
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = '';
-                noMsg.classList.remove('hidden');
-                return;
-            }
-
-            noMsg.classList.add('hidden');
-            tbody.innerHTML = filtered.map(o => {
-                const dz = parseFloat(o.qty_dozens) || 0;
-                const un = parseFloat(o.qty_units) || 0;
-                const pr = parseFloat(o.price_per_dozen) || 0;
-                const totalCartelas = (dz * 12) + un;
-                const totalValue = (dz * pr) + (un * (pr / 12));
-
-                return `
-                    <tr class="hover:bg-zinc-900/50 transition-colors">
-                        <td class="px-4 py-3 font-mono text-amber-400 font-bold">${o.id}</td>
-                        <td class="px-4 py-3">
-                            <div class="font-bold text-white">${escapeHtml(o.client_name)}</div>
-                            <div class="text-[10px] text-zinc-500">${escapeHtml(o.client_doc)}</div>
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="font-bold text-amber-300">${dz} dz</span>
-                            <span class="text-[10px] text-zinc-500 block">(${totalCartelas} cartelas / ${totalCartelas * 4} cones)</span>
-                        </td>
-                        <td class="px-4 py-3 font-mono font-bold text-emerald-400">
-                            R$ ${totalValue.toFixed(2).replace('.', ',')}
-                        </td>
-                        <td class="px-4 py-3 text-zinc-400">${formatDate(o.delivery_date)}</td>
-                        <td class="px-4 py-3">
-                            <select onchange="changeOrderStatus('${o.id}', this.value)" class="bg-zinc-900 border border-zinc-700 text-[11px] rounded-lg px-2 py-1 font-semibold focus:outline-none ${getStatusColorText(o.status)}">
-                                <option value="Pendente" ${o.status === 'Pendente' ? 'selected' : ''}>Pendente</option>
-                                <option value="Em Produção" ${o.status === 'Em Produção' ? 'selected' : ''}>Em Produção</option>
-                                <option value="A Caminho" ${o.status === 'A Caminho' ? 'selected' : ''}>A Caminho</option>
-                                <option value="Entregue" ${o.status === 'Entregue' ? 'selected' : ''}>Entregue</option>
-                            </select>
-                        </td>
-                        <td class="px-4 py-3 text-right space-x-1">
-                            <button onclick="openReceiptModal('${o.id}')" title="Imprimir Comprovante" class="bg-zinc-800 hover:bg-amber-500/20 text-amber-400 p-2 rounded-lg">
-                                <i class="fa-solid fa-print"></i>
-                            </button>
-                            <button onclick="deleteOrder('${o.id}')" title="Excluir" class="bg-zinc-800 hover:bg-red-500/20 text-red-400 p-2 rounded-lg">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+            if (ordersData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-6 text-zinc-500">
+                            Nenhuma encomenda encontrada.
                         </td>
                     </tr>
                 `;
-            }).join('');
+                return;
+            }
+
+            ordersData.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-zinc-900/50 transition-colors";
+
+                const statusColor = order.status === 'Entregue' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                                   order.status === 'Cancelado' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
+                                   'bg-amber-500/10 text-amber-400 border-amber-500/30';
+
+                tr.innerHTML = `
+                    <td class="p-3 font-mono text-amber-400 font-bold">${order.order_number}</td>
+                    <td class="p-3">
+                        <strong class="text-white block">${order.client_name}</strong>
+                        <span class="text-[10px] text-zinc-500">${order.client_doc || 'Sem documento'}</span>
+                    </td>
+                    <td class="p-3 font-semibold">${order.qty_dozens} dz <span class="text-[10px] text-zinc-500">(${order.total_cartelas || order.qty_dozens * 12} cx)</span></td>
+                    <td class="p-3 font-mono font-bold text-emerald-400">R$ ${parseFloat(order.total_amount).toFixed(2)}</td>
+                    <td class="p-3 text-[11px]">
+                        <div>${order.order_date}</div>
+                        <div class="text-zinc-500 text-[10px]">Prev: ${order.delivery_date}</div>
+                    </td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusColor}">
+                            ${order.status}
+                        </span>
+                    </td>
+                    <td class="p-3 text-right space-x-1">
+                        <button onclick="openReceipt('${order.id}')" title="Ver Comprovante" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-amber-400 rounded-lg">
+                            <i class="fa-solid fa-receipt"></i>
+                        </button>
+                        <button onclick="toggleStatus('${order.id}')" title="Alterar Status" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-blue-400 rounded-lg">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                        <button onclick="deleteOrder('${order.id}')" title="Excluir" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-red-400 rounded-lg">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
-        async function changeOrderStatus(id, newStatus) {
-            const order = orders.find(o => o.id === id);
-            if (order) {
-                order.status = newStatus;
-                if (supabaseClient) {
-                    await supabaseClient.from('pedidos').update({ status: newStatus }).eq('id', id);
-                }
-                localStorage.setItem('buriti_brasa_orders', JSON.stringify(orders));
-                updateDashboard();
-                renderOrdersTable();
+        function filterOrders() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const status = document.getElementById('status-filter').value;
+
+            const filtered = ordersData.filter(o => {
+                const matchQuery = o.client_name.toLowerCase().includes(query) || (o.client_doc && o.client_doc.includes(query)) || o.order_number.toLowerCase().includes(query);
+                const matchStatus = status === 'ALL' || o.status === status;
+                return matchQuery && matchStatus;
+            });
+
+            // Temporariamente substitui ordersData para renderização
+            const original = ordersData;
+            ordersData = filtered;
+            renderOrdersTable();
+            ordersData = original;
+        }
+
+        async function toggleStatus(id) {
+            const order = ordersData.find(o => o.id === id);
+            if (!order) return;
+
+            const nextStatus = order.status === 'Pendente' ? 'Entregue' : order.status === 'Entregue' ? 'Cancelado' : 'Pendente';
+            order.status = nextStatus;
+
+            if (supabaseClient) {
+                await supabaseClient.from('buriti_orders').update({ status: nextStatus }).eq('id', id);
+            } else {
+                localStorage.setItem('BB_ORDERS', JSON.stringify(ordersData));
             }
+            loadOrders();
         }
 
         async function deleteOrder(id) {
-            if (confirm("Tem certeza que deseja excluir esta encomenda?")) {
-                orders = orders.filter(o => o.id !== id);
-                if (supabaseClient) {
-                    await supabaseClient.from('pedidos').delete().eq('id', id);
-                }
-                localStorage.setItem('buriti_brasa_orders', JSON.stringify(orders));
-                updateDashboard();
-                renderOrdersTable();
+            if (!confirm("Deseja realmente excluir esta encomenda?")) return;
+
+            if (supabaseClient) {
+                await supabaseClient.from('buriti_orders').delete().eq('id', id);
+            } else {
+                ordersData = ordersData.filter(o => o.id !== id);
+                localStorage.setItem('BB_ORDERS', JSON.stringify(ordersData));
             }
+            loadOrders();
         }
 
-        function openSupabaseModal() { document.getElementById('supabase-modal').classList.remove('hidden'); }
-        function closeSupabaseModal() { document.getElementById('supabase-modal').classList.add('hidden'); }
+        // VISUALIZAÇÃO E IMPRESSÃO DE COMPROVANTE
+        function openReceipt(id) {
+            const order = ordersData.find(o => o.id === id);
+            if (!order) return;
 
-        function saveSupabaseConfig() {
-            const url = document.getElementById('supabase-url').value.trim();
-            const key = document.getElementById('supabase-key').value.trim();
-            if (!url || !key) return alert("Por favor, preencha a URL e a Key do Supabase.");
+            currentActiveOrder = order;
 
-            localStorage.setItem('buriti_supabase_url', url);
-            localStorage.setItem('buriti_supabase_key', key);
-            initSupabaseFromStorage();
-            fetchOrders();
-            closeSupabaseModal();
-        }
+            document.getElementById('rec-order-number').innerText = order.order_number;
+            document.getElementById('rec-client-name').innerText = order.client_name;
+            document.getElementById('rec-client-doc').innerText = `CNPJ/CPF: ${order.client_doc || 'Não informado'}`;
+            document.getElementById('rec-client-phone').innerText = `Tel: ${order.client_phone || 'Não informado'}`;
+            document.getElementById('rec-client-address').innerText = order.client_address || 'Entrega local';
+            document.getElementById('rec-client-city').innerText = order.client_city || 'São João da Ponta - PA';
 
-        function clearSupabaseConfig() {
-            localStorage.removeItem('buriti_supabase_url');
-            localStorage.removeItem('buriti_supabase_key');
-            supabaseClient = null;
-            document.getElementById('supabase-indicator').className = "w-2.5 h-2.5 rounded-full bg-amber-500";
-            document.getElementById('supabase-status-text').textContent = "Supabase: Modo Local";
-            closeSupabaseModal();
-            fetchOrders();
-        }
+            document.getElementById('rec-dozens').innerText = `${order.qty_dozens} dz`;
+            document.getElementById('rec-cartelas').innerText = `${order.total_cartelas || order.qty_dozens * 12} cartelas`;
+            document.getElementById('rec-total').innerText = `R$ ${parseFloat(order.total_amount).toFixed(2)}`;
+            document.getElementById('rec-total-final').innerText = `R$ ${parseFloat(order.total_amount).toFixed(2)}`;
 
-        function openReceiptModal(id) {
-            const o = orders.find(item => item.id === id);
-            if (!o) return;
-
-            const dz = parseFloat(o.qty_dozens) || 0;
-            const un = parseFloat(o.qty_units) || 0;
-            const pr = parseFloat(o.price_per_dozen) || 0;
-            const totalCartelas = (dz * 12) + un;
-            const totalValue = (dz * pr) + (un * (pr / 12));
-
-            document.getElementById('rec-order-id').textContent = o.id;
-            document.getElementById('rec-date').textContent = formatDate(o.order_date);
-            document.getElementById('rec-client-name').textContent = o.client_name;
-            document.getElementById('rec-trade-name').textContent = o.client_trade_name || 'N/A';
-            document.getElementById('rec-client-doc').textContent = o.client_doc;
-            document.getElementById('rec-client-phone').textContent = o.client_phone;
-            document.getElementById('rec-client-address').textContent = o.client_address;
-            document.getElementById('rec-client-city').textContent = o.client_city;
-
-            document.getElementById('rec-qty-dozens').textContent = `${dz} dz`;
-            document.getElementById('rec-qty-cartelas').textContent = `${totalCartelas} un.`;
-            document.getElementById('rec-price-dozen').textContent = `R$ ${pr.toFixed(2).replace('.', ',')}`;
-            document.getElementById('rec-subtotal').textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`;
-            document.getElementById('rec-final-total').textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`;
-
-            document.getElementById('rec-payment').textContent = o.payment_method;
-            document.getElementById('rec-delivery-date').textContent = formatDate(o.delivery_date);
-            document.getElementById('rec-status').textContent = o.status;
-            document.getElementById('rec-notes').textContent = o.order_notes || 'Nenhuma instrução adicional.';
+            document.getElementById('rec-payment').innerText = order.payment_method;
+            document.getElementById('rec-date').innerText = order.order_date;
+            document.getElementById('rec-delivery').innerText = order.delivery_date;
+            document.getElementById('rec-notes').innerText = order.notes || 'Sem observações adicionais.';
 
             document.getElementById('receipt-modal').classList.remove('hidden');
         }
 
-        function closeModal() { document.getElementById('receipt-modal').classList.add('hidden'); }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const parts = dateStr.split('-');
-            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
-        }
-
-        function getStatusBadgeClass(status) {
-            switch(status) {
-                case 'Entregue': return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-                case 'A Caminho': return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
-                case 'Em Produção': return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
-                default: return 'bg-red-500/20 text-red-400 border border-red-500/30';
-            }
-        }
-
-        function getStatusColorText(status) {
-            switch(status) {
-                case 'Entregue': return 'text-emerald-400 border-emerald-500/40';
-                case 'A Caminho': return 'text-blue-400 border-blue-500/40';
-                case 'Em Produção': return 'text-amber-400 border-amber-500/40';
-                default: return 'text-red-400 border-red-500/40';
-            }
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        function closeReceiptModal() {
+            document.getElementById('receipt-modal').classList.add('hidden');
         }
     </script>
 </body>
