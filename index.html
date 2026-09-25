@@ -343,71 +343,106 @@
                         </div>
                     </div>
 
-                    <!-- QUANTIDADES -->
-                    <div class="space-y-4 pt-4 border-t border-zinc-800">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2 font-brand">
-                            <i class="fa-solid fa-boxes-packing"></i> 2. Quantidade de Dúzias, Cartelas e Unidades
-                        </h3>
+                    <!-- QUANTIDADES E UNIDADES -->
+<div class="space-y-4 pt-4 border-t border-zinc-800">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2 font-brand">
+        <i class="fa-solid fa-boxes-packing"></i> 2. Quantidade de Dúzias, Cartelas e Unidades
+    </h3>
 
-                        <div class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                                <div>
-                                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Qtd. de Dúzias</label>
-                                    <div class="relative">
-                                        <input type="number" id="qty_dozens" min="0" step="0.5" value="0" oninput="calculateTotals()" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
-                                        <span class="absolute right-3 top-2.5 text-xs text-zinc-500 font-semibold">Dúzias</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Cartelas (Caixas 4 un.)</label>
-                                    <div class="relative">
-                                        <input type="number" id="qty_units" min="0" value="0" oninput="calculateTotals()" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
-                                        <span class="absolute right-3 top-2.5 text-xs text-zinc-500 font-semibold">Cartelas</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-amber-400 mb-1">Qtd. Unidades Avulsas</label>
-                                    <div class="relative">
-                                        <input type="number" id="qty_single_units" min="0" value="0" oninput="calculateTotals()" class="w-full bg-zinc-950 border border-amber-500/50 rounded-xl px-3.5 py-2.5 text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-500">
-                                        <span class="absolute right-3 top-2.5 text-xs text-zinc-500 font-semibold">Unid.</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Preço por Dúzia (R$)</label>
-                                    <div class="relative">
-                                        <span class="absolute left-3 top-2.5 text-xs text-zinc-400 font-bold">R$</span>
-                                        <input type="number" id="price_per_dozen" min="0" step="0.50" value="60.00" oninput="calculateTotals()" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl pl-8 pr-3.5 py-2.5 text-sm text-emerald-400 font-bold focus:outline-none focus:border-amber-500">
-                                    </div>
-                                </div>
-                            </div>
+    <div class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+            <div>
+                <label class="block text-xs font-semibold text-zinc-300 mb-1">Qtd. de Dúzias</label>
+                <div class="relative">
+                    <input type="number" id="qty_dozens" min="0" step="0.5" value="0" oninput="calculateTotals()" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                    <span class="absolute right-3 top-2.5 text-xs text-zinc-500 font-semibold">Dúzias</span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-zinc-300 mb-1">Cartelas (Caixas 4 un.)</label>
+                <div class="relative">
+                    <input type="number" id="qty_units" min="0" value="0" oninput="calculateTotals()" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                    <span class="absolute right-3 top-2.5 text-xs text-zinc-500 font-semibold">Cartelas</span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-amber-400 mb-1">Qtd. Unidades Avulsas</label>
+                <div class="relative">
+                    <input type="number" id="qty_single_units" min="0" value="0" oninput="calculateTotals()" class="w-full bg-zinc-950 border border-amber-500/50 rounded-xl px-3.5 py-2.5 text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-500">
+                    <span class="absolute right-3 top-2.5 text-xs text-zinc-500 font-semibold">Unid.</span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-zinc-300 mb-1">Preço por Dúzia (R$)</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-xs text-zinc-400 font-bold">R$</span>
+                    <input type="number" id="price_per_dozen" min="0" step="0.50" value="60.00" oninput="calculateTotals()" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl pl-8 pr-3.5 py-2.5 text-sm text-emerald-400 font-bold focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+        </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center pt-2">
-                                <div>
-                                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Preço por Unidade Avulsa (R$)</label>
-                                    <div class="relative">
-                                        <span class="absolute left-3 top-2.5 text-xs text-zinc-400 font-bold">R$</span>
-                                        <input type="number" id="price_per_single_unit" min="0" step="0.05" value="0.70" oninput="calculateTotals()" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl pl-8 pr-3.5 py-2.5 text-sm text-amber-400 font-bold focus:outline-none focus:border-amber-500">
-                                    </div>
-                                </div>
-                                <div class="text-xs text-zinc-400 flex items-center h-full pt-5">
-                                    <span>Cada unidade avulsa custa R$ 0,70 (predefinido).</span>
-                                </div>
-                            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center pt-2">
+            <div>
+                <label class="block text-xs font-semibold text-zinc-300 mb-1">Preço por Unidade Avulsa (R$)</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-xs text-zinc-400 font-bold">R$</span>
+                    <input type="number" id="price_per_single_unit" min="0" step="0.05" value="0.70" oninput="calculateTotals()" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl pl-8 pr-3.5 py-2.5 text-sm text-amber-400 font-bold focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+            <div class="text-xs text-zinc-400 flex items-center h-full pt-5">
+                <span>Define o valor cobrado por cada unidade avulsa (predefinido a R$ 0,70).</span>
+            </div>
+        </div>
 
-                            <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex flex-wrap items-center justify-between text-xs text-amber-300 gap-2">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid fa-circle-info text-amber-400 text-sm"></i>
-                                    <span>
-                                        Total Geral: <strong id="calc-total-cartelas" class="text-white font-bold">0</strong> itens/cartelas 
-                                        <span class="text-zinc-400"> (<span id="calc-total-acendedores" class="text-amber-400 font-bold">0</span> cones individuais)</span>
-                                    </span>
-                                </div>
-                                  <div class="text-sm font-black text-emerald-400 font-mono">
-                                    Subtotal: R$ <span id="calc-subtotal-val">0,00</span>
-                                  </div>
-                          </div>
-                        </div>
-                    </div>
+        <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex flex-wrap items-center justify-between text-xs text-amber-300 gap-2">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-amber-400 text-sm"></i>
+                <span>
+                    Total Geral: <strong id="calc-total-cartelas" class="text-white font-bold">0</strong> itens 
+                    <span class="text-zinc-400">(<span id="calc-total-acendedores" class="text-amber-400 font-bold">0</span> unidades individuais)</span>
+                </span>
+            </div>
+            <div class="text-sm font-black text-emerald-400 font-mono">
+                Subtotal: R$ <span id="calc-subtotal-val">0,00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPT DE CÁLCULO (Coloque dentro das tags <script> existentes no seu index.html) -->
+<script>
+function calculateTotals() {
+    const dozens = parseFloat(document.getElementById('qty_dozens').value) || 0;
+    const cartelas = parseInt(document.getElementById('qty_units').value) || 0;
+    const singleUnits = parseInt(document.getElementById('qty_single_units').value) || 0;
+    
+    const priceDozen = parseFloat(document.getElementById('price_per_dozen').value) || 0;
+    const priceSingle = parseFloat(document.getElementById('price_per_single_unit').value) || 0.70;
+
+    // Custos parciais
+    const totalDozensCost = dozens * priceDozen;
+    const totalCartelasCost = cartelas * (priceDozen / 12); 
+    const totalSingleCost = singleUnits * priceSingle;
+    
+    const subtotal = totalDozensCost + totalCartelasCost + totalSingleCost;
+
+    // Contagens totais para exibição
+    const equivalentCartelasFromDozens = dozens * 12;
+    const totalCartelasCount = equivalentCartelasFromDozens + cartelas;
+    const totalConesCount = (totalCartelasCount * 4) + singleUnits;
+
+    // Atualizar os elementos visuais na página
+    document.getElementById('calc-total-cartelas').textContent = totalCartelasCount + (singleUnits > 0 ? ` + ${singleUnits} un` : '');
+    document.getElementById('calc-total-acendedores').textContent = totalConesCount;
+    document.getElementById('calc-subtotal-val').textContent = subtotal.toFixed(2).replace('.', ',');
+    
+    // Se existir um elemento final global na página, atualiza-o também
+    const finalTotalEl = document.getElementById('calc-final-total');
+    if (finalTotalEl) {
+        finalTotalEl.textContent = subtotal.toFixed(2).replace('.', ',');
+    }
+}
+</script>
 
                     <!-- PAGAMENTO E ENTREGA -->
                     <div class="space-y-4 pt-4 border-t border-zinc-800">
